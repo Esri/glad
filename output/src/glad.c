@@ -4548,7 +4548,7 @@ static void load_GL_ES_VERSION_2_0(GLADloadproc load) {
 	glad_glStencilFuncSeparate = (PFNGLSTENCILFUNCSEPARATEPROC)load("glStencilFuncSeparate");
 	glad_glStencilMask = (PFNGLSTENCILMASKPROC)load("glStencilMask");
 	glad_glStencilMaskSeparate = (PFNGLSTENCILMASKSEPARATEPROC)load("glStencilMaskSeparate");
-	glad_glStencilOp = (PFNGLSTENCILOPPROC)load("glStencilOp"); 
+	glad_glStencilOp = (PFNGLSTENCILOPPROC)load("glStencilOp");
 	glad_glStencilOpSeparate = (PFNGLSTENCILOPSEPARATEPROC)load("glStencilOpSeparate");
 	glad_glTexImage2D = (PFNGLTEXIMAGE2DPROC)load("glTexImage2D");
 	glad_glTexParameterf = (PFNGLTEXPARAMETERFPROC)load("glTexParameterf");
