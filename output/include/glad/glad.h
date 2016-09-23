@@ -829,7 +829,7 @@ GLAPI struct gladGLversionStruct GLVersion;
 
 GLAPI int gladLoadGL(void);
 
-GLAPI int gladLoadGLES2Loader(GLADloadproc);
+GLAPI int gladLoadGLES2Loader(GLADloadproc, GLADloadproc);
 
 GLAPI int gladLoadGLLoader(GLADloadproc);
 
