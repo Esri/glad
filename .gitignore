@@ -1,14 +1,47 @@
-*.pyc
-*.xml
-*.kdev4
-build/
-*.o
-a.out
-*.kdev_include_paths
-main.c
-*.diff
-.idea
-dist/
-*.egg-info
-khrplatform.h
-eglplatform.h
+# This is a change tracked .gitignore file which specifies what files
+# git should ignore adding to the stage and committing.  There is also
+# an untracked internal ".gitignore" file called .git/info/exclude which
+# will contain any global ignores and is modified by the clone_or_pull_repos
+# script.  If you find that there is a file that you need to be change
+# tracked but falls into one of these ignore regular expressions, you can
+# still un-ignore it with a !.  For example, if test.sln is needed to be
+# committed, you can add !test.sln to your project's .gitignore file to
+# allow it to be staged, committed and tracked.
+
+# Premake generated files #
+###########################
+*.vcxproj*
+*.sln
+Makefile
+*.make
+*.xcworkspace
+*.xcodeproj
+
+# OS generated files #
+######################
+.DS_Store*
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+.project
+
+# VS generated files #
+######################
+ipch/
+*.suo
+*.opensdf
+*.sdf
+*.vcxproj
+*.filters
+*.user
+
+# Qt files
+###########################
+*.config
+*.creator*
+*.files
+*.includes
+*.user*
+moc/

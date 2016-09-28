@@ -17,7 +17,7 @@ project "glad"
   -- Add only files common to all platforms here
 
   files {
-    "output/src/glad.c",
+    "src/glad.c",
   }
 
   flags {
@@ -25,7 +25,7 @@ project "glad"
   }
 
   local t_includedirs = {
-    "output/include",
+    ".",
   }
 
   includedirs { t_includedirs }
