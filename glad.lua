@@ -446,6 +446,30 @@ project "glad"
     configuration { "android_x86_release" }
 
     -- -------------------------------------------------------------
+    -- configuration { "androidgles3_armv8_debug" }
+    -- -------------------------------------------------------------
+
+    -- common configuration settings
+
+    dofile (_BUILD_DIR .. "/static_androidgles3_armv8_debug.lua")
+
+    -- project specific configuration settings
+
+    configuration { "androidgles3_armv8_debug" }
+
+    -- -------------------------------------------------------------
+    -- configuration { "androidgles3_armv8_release" }
+    -- -------------------------------------------------------------
+
+    -- common configuration settings
+
+    dofile (_BUILD_DIR .. "/static_androidgles3_armv8_release.lua")
+
+    -- project specific configuration settings
+
+    configuration { "androidgles3_armv8_release" }
+
+    -- -------------------------------------------------------------
   end
 
   if (_TARGET_IS_WINRT) then
