@@ -902,7 +902,13 @@ static int get_exts(void) {
         }
 
         for(index = 0; index < num_exts_i; index++) {
-            exts_i[index] = (const char*)glGetStringi(GL_EXTENSIONS, index);
+            const char * gl_str_tmp = (const char*)glGetStringi(GL_EXTENSIONS, index);
+            // assume null terminated
+            size_t len = strlen(gl_str_tmp);
+            len = len < 1024 ? len : 1024;
+            char * local_str = malloc((len+1) * sizeof(*exts_i)); 
+            strcpy(local_str, gl_str_tmp);
+            exts_i[index] = local_str ;
         }
     }
 #endif
@@ -911,6 +917,10 @@ static int get_exts(void) {
 
 static void free_exts(void) {
     if (exts_i != NULL) {
+        int index;
+        for(index = 0; index < num_exts_i; index++) {
+            free((char*)exts_i[index]);
+        }
         free((char **)exts_i);
         exts_i = NULL;
     }
