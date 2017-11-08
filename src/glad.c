@@ -902,7 +902,39 @@ static int get_exts(void) {
         }
 
         for(index = 0; index < num_exts_i; index++) {
-            exts_i[index] = (const char*)glGetStringi(GL_EXTENSIONS, index);
+
+            const char * gl_str_tmp = (const char*)glGetStringi(GL_EXTENSIONS, index);
+            size_t len = 0;
+
+            // Check returned string
+            while(gl_str_tmp[len] != '\0' && len < 256)
+                len++;
+
+            // If this is true something probably went wrong,
+            // this glad source does not use strings longer than ~40 chars
+            if(len>=256 || len == 0)
+            {
+                exts_i[index] = NULL;
+                continue;
+            }
+
+            char * local_str = malloc((len+1) * sizeof(*exts_i));
+
+            if(local_str == NULL)
+            {
+                exts_i[index] = NULL;
+                continue;
+            }
+
+            int strpos;
+            for(strpos = 0;
+                strpos < len + 1; // add one to include null byte
+                strpos++)
+            {
+                local_str[strpos] = gl_str_tmp[strpos];
+            }
+
+            exts_i[index] = local_str;
         }
     }
 #endif
@@ -911,6 +943,10 @@ static int get_exts(void) {
 
 static void free_exts(void) {
     if (exts_i != NULL) {
+        int index;
+        for(index = 0; index < num_exts_i; index++) {
+            free((char*)exts_i[index]);
+        }
         free((char **)exts_i);
         exts_i = NULL;
     }
@@ -945,10 +981,11 @@ static int has_ext(const char *ext) {
     } else {
         int index;
 
+        if(exts_i == NULL) return 0;
         for(index = 0; index < num_exts_i; index++) {
             const char *e = exts_i[index];
 
-            if(strcmp(e, ext) == 0) {
+            if(exts_i[index] != NULL && strcmp(e, ext) == 0) {
                 return 1;
             }
         }
