@@ -771,7 +771,12 @@ PFNWGLGETPROCADDRESSPROC_PRIVATE gladGetProcAddressPtr;
 
 static
 int open_gl(void) {
+#if defined(RTC_WINDOWS_UNIVERSAL)
+    libGL = LoadPackagedLibrary(L"opengl32.dll",0);
+#else
     libGL = LoadLibraryW(L"opengl32.dll");
+#endif // defined(RTC_WINDOWS_UNIVERSAL)
+
     if(libGL != NULL) {
         gladGetProcAddressPtr = (PFNWGLGETPROCADDRESSPROC_PRIVATE)GetProcAddress(
                 libGL, "wglGetProcAddress");
