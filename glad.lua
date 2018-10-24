@@ -168,7 +168,7 @@ project "glad"
     -- -------------------------------------------------------------
   end
 
-  if (os.is("macosx") and not _OS_IS_IOS and not _OS_IS_TVOS and not _OS_IS_ANDROID) then
+  if (os.is("macosx") and not _OS_IS_IOS and not _OS_IS_ANDROID) then
     -- -------------------------------------------------------------
     -- configuration { "macosx" }
     -- -------------------------------------------------------------
@@ -316,70 +316,6 @@ project "glad"
     -- project specific configuration settings
 
     configuration { "ios_sim64_release" }
-
-    -- -------------------------------------------------------------
-  end
-
-  if (_OS_IS_TVOS) then
-    -- -------------------------------------------------------------
-    -- configuration { "tvos" } == _OS_IS_TVOS
-    -- -------------------------------------------------------------
-
-    -- common configuration settings
-
-    dofile (_BUILD_DIR .. "/static_tvos.lua")
-
-    -- project specific configuration settings
-
-    configuration { "tvos*" }
-
-    -- -------------------------------------------------------------
-    -- configuration { "tvos_arm64_debug" }
-    -- -------------------------------------------------------------
-
-    -- common configuration settings
-
-    dofile (_BUILD_DIR .. "/static_tvos_arm64_debug.lua")
-
-    -- project specific configuration settings
-
-    configuration { "tvos_arm64_debug" }
-
-    -- -------------------------------------------------------------
-    -- configuration { "tvos_arm64_release" }
-    -- -------------------------------------------------------------
-
-    -- common configuration settings
-
-    dofile (_BUILD_DIR .. "/static_tvos_arm64_release.lua")
-
-    -- project specific configuration settings
-
-    configuration { "tvos_arm64_release" }
-
-    -- -------------------------------------------------------------
-    -- configuration { "tvos_sim64_debug" }
-    -- -------------------------------------------------------------
-
-    -- common configuration settings
-
-    dofile (_BUILD_DIR .. "/static_tvos_sim64_debug.lua")
-
-    -- project specific configuration settings
-
-    configuration { "tvos_sim64_debug" }
-
-    -- -------------------------------------------------------------
-    -- configuration { "tvos_sim64_release" }
-    -- -------------------------------------------------------------
-
-    -- common configuration settings
-
-    dofile (_BUILD_DIR .. "/static_tvos_sim64_release.lua")
-
-    -- project specific configuration settings
-
-    configuration { "tvos_sim64_release" }
 
     -- -------------------------------------------------------------
   end
