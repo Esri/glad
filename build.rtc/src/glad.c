@@ -822,7 +822,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <glad/glad.h>
+#include <glad.h>
 
 static void* get_proc(const char *namez);
 
@@ -852,15 +852,19 @@ static PFNWGLGETPROCADDRESSPROC_PRIVATE gladGetProcAddressPtr;
 
 static
 int open_gl(void) {
-#ifndef IS_UWP
+// begin post-generator edit
+#if defined(RTC_WINDOWS_UNIVERSAL)
+    libGL = LoadPackagedLibrary(L"opengl32.dll",0);
+#else
     libGL = LoadLibraryW(L"opengl32.dll");
+#endif // defined(RTC_WINDOWS_UNIVERSAL)
+// end post-generator edit
     if(libGL != NULL) {
         void (* tmp)(void);
         tmp = (void(*)(void)) GetProcAddress(libGL, "wglGetProcAddress");
         gladGetProcAddressPtr = (PFNWGLGETPROCADDRESSPROC_PRIVATE) tmp;
         return gladGetProcAddressPtr != NULL;
     }
-#endif
 
     return 0;
 }
@@ -987,7 +991,25 @@ static int get_exts(void) {
 
         for(index = 0; index < (unsigned)num_exts_i; index++) {
             const char *gl_str_tmp = (const char*)glGetStringi(GL_EXTENSIONS, index);
-            size_t len = strlen(gl_str_tmp);
+
+            // begin post-generator edit
+            const size_t c_max_length_extension_string = 75;// extension strings are not more than ~50 chars
+            size_t len = 0;
+            char gl_str_i = gl_str_tmp[len];
+            while(gl_str_i != '\0' &&
+                  len < c_max_length_extension_string)
+            {
+                gl_str_i = gl_str_tmp[len];
+                len++;
+            }
+
+            // If this is true the string was not null terminated
+            if(len >= c_max_length_extension_string || len == 0)
+            {
+                exts_i[index] = NULL;
+                continue;
+            }
+            // end post-generator edit
 
             char *local_str = (char*)malloc((len+1) * sizeof(char));
             if(local_str != NULL) {
@@ -11028,140 +11050,140 @@ static void find_coreGLES2(void) {
 	}
 }
 
-int gladLoadGLES2Loader(GLADloadproc load) {
+int gladLoadGLES2Loader(GLADloadproc loadCore, GLADloadproc loadExtension){
 	GLVersion.major = 0; GLVersion.minor = 0;
-	glGetString = (PFNGLGETSTRINGPROC)load("glGetString");
+	glGetString = (PFNGLGETSTRINGPROC)loadCore("glGetString");
 	if(glGetString == NULL) return 0;
 	if(glGetString(GL_VERSION) == NULL) return 0;
 	find_coreGLES2();
-	load_GL_ES_VERSION_2_0(load);
-	load_GL_ES_VERSION_3_0(load);
-	load_GL_ES_VERSION_3_1(load);
-	load_GL_ES_VERSION_3_2(load);
+	load_GL_ES_VERSION_2_0(loadCore);
+	load_GL_ES_VERSION_3_0(loadCore);
+	load_GL_ES_VERSION_3_1(loadCore);
+	load_GL_ES_VERSION_3_2(loadCore);
 
 	if (!find_extensionsGLES2()) return 0;
-	load_GL_AMD_framebuffer_multisample_advanced(load);
-	load_GL_AMD_performance_monitor(load);
-	load_GL_ANGLE_framebuffer_blit(load);
-	load_GL_ANGLE_framebuffer_multisample(load);
-	load_GL_ANGLE_instanced_arrays(load);
-	load_GL_ANGLE_translated_shader_source(load);
-	load_GL_APPLE_copy_texture_levels(load);
-	load_GL_APPLE_framebuffer_multisample(load);
-	load_GL_APPLE_sync(load);
-	load_GL_EXT_EGL_image_storage(load);
-	load_GL_EXT_base_instance(load);
-	load_GL_EXT_blend_func_extended(load);
-	load_GL_EXT_blend_minmax(load);
-	load_GL_EXT_buffer_storage(load);
-	load_GL_EXT_clear_texture(load);
-	load_GL_EXT_clip_control(load);
-	load_GL_EXT_copy_image(load);
-	load_GL_EXT_debug_label(load);
-	load_GL_EXT_debug_marker(load);
-	load_GL_EXT_discard_framebuffer(load);
-	load_GL_EXT_disjoint_timer_query(load);
-	load_GL_EXT_draw_buffers(load);
-	load_GL_EXT_draw_buffers_indexed(load);
-	load_GL_EXT_draw_elements_base_vertex(load);
-	load_GL_EXT_draw_instanced(load);
-	load_GL_EXT_draw_transform_feedback(load);
-	load_GL_EXT_external_buffer(load);
-	load_GL_EXT_geometry_shader(load);
-	load_GL_EXT_instanced_arrays(load);
-	load_GL_EXT_map_buffer_range(load);
-	load_GL_EXT_memory_object(load);
-	load_GL_EXT_memory_object_fd(load);
-	load_GL_EXT_memory_object_win32(load);
-	load_GL_EXT_multi_draw_arrays(load);
-	load_GL_EXT_multi_draw_indirect(load);
-	load_GL_EXT_multisampled_render_to_texture(load);
-	load_GL_EXT_multiview_draw_buffers(load);
-	load_GL_EXT_occlusion_query_boolean(load);
-	load_GL_EXT_polygon_offset_clamp(load);
-	load_GL_EXT_primitive_bounding_box(load);
-	load_GL_EXT_raster_multisample(load);
-	load_GL_EXT_robustness(load);
-	load_GL_EXT_semaphore(load);
-	load_GL_EXT_semaphore_fd(load);
-	load_GL_EXT_semaphore_win32(load);
-	load_GL_EXT_separate_shader_objects(load);
-	load_GL_EXT_shader_framebuffer_fetch_non_coherent(load);
-	load_GL_EXT_shader_pixel_local_storage2(load);
-	load_GL_EXT_sparse_texture(load);
-	load_GL_EXT_tessellation_shader(load);
-	load_GL_EXT_texture_border_clamp(load);
-	load_GL_EXT_texture_buffer(load);
-	load_GL_EXT_texture_storage(load);
-	load_GL_EXT_texture_view(load);
-	load_GL_EXT_win32_keyed_mutex(load);
-	load_GL_EXT_window_rectangles(load);
-	load_GL_IMG_bindless_texture(load);
-	load_GL_IMG_framebuffer_downsample(load);
-	load_GL_IMG_multisampled_render_to_texture(load);
-	load_GL_INTEL_framebuffer_CMAA(load);
-	load_GL_INTEL_performance_query(load);
-	load_GL_KHR_blend_equation_advanced(load);
-	load_GL_KHR_debug(load);
-	load_GL_KHR_parallel_shader_compile(load);
-	load_GL_KHR_robustness(load);
-	load_GL_NV_bindless_texture(load);
-	load_GL_NV_blend_equation_advanced(load);
-	load_GL_NV_clip_space_w_scaling(load);
-	load_GL_NV_conditional_render(load);
-	load_GL_NV_conservative_raster(load);
-	load_GL_NV_conservative_raster_pre_snap_triangles(load);
-	load_GL_NV_copy_buffer(load);
-	load_GL_NV_coverage_sample(load);
-	load_GL_NV_draw_buffers(load);
-	load_GL_NV_draw_instanced(load);
-	load_GL_NV_draw_vulkan_image(load);
-	load_GL_NV_fence(load);
-	load_GL_NV_fragment_coverage_to_color(load);
-	load_GL_NV_framebuffer_blit(load);
-	load_GL_NV_framebuffer_mixed_samples(load);
-	load_GL_NV_framebuffer_multisample(load);
-	load_GL_NV_gpu_shader5(load);
-	load_GL_NV_instanced_arrays(load);
-	load_GL_NV_internalformat_sample_query(load);
-	load_GL_NV_memory_attachment(load);
-	load_GL_NV_mesh_shader(load);
-	load_GL_NV_non_square_matrices(load);
-	load_GL_NV_path_rendering(load);
-	load_GL_NV_polygon_mode(load);
-	load_GL_NV_read_buffer(load);
-	load_GL_NV_sample_locations(load);
-	load_GL_NV_scissor_exclusive(load);
-	load_GL_NV_shading_rate_image(load);
-	load_GL_NV_viewport_array(load);
-	load_GL_NV_viewport_swizzle(load);
-	load_GL_OES_EGL_image(load);
-	load_GL_OES_copy_image(load);
-	load_GL_OES_draw_buffers_indexed(load);
-	load_GL_OES_draw_elements_base_vertex(load);
-	load_GL_OES_geometry_shader(load);
-	load_GL_OES_get_program_binary(load);
-	load_GL_OES_mapbuffer(load);
-	load_GL_OES_primitive_bounding_box(load);
-	load_GL_OES_sample_shading(load);
-	load_GL_OES_tessellation_shader(load);
-	load_GL_OES_texture_3D(load);
-	load_GL_OES_texture_border_clamp(load);
-	load_GL_OES_texture_buffer(load);
-	load_GL_OES_texture_storage_multisample_2d_array(load);
-	load_GL_OES_texture_view(load);
-	load_GL_OES_vertex_array_object(load);
-	load_GL_OES_viewport_array(load);
-	load_GL_OVR_multiview(load);
-	load_GL_OVR_multiview_multisampled_render_to_texture(load);
-	load_GL_QCOM_alpha_test(load);
-	load_GL_QCOM_driver_control(load);
-	load_GL_QCOM_extended_get(load);
-	load_GL_QCOM_extended_get2(load);
-	load_GL_QCOM_framebuffer_foveated(load);
-	load_GL_QCOM_shader_framebuffer_fetch_noncoherent(load);
-	load_GL_QCOM_texture_foveated(load);
-	load_GL_QCOM_tiled_rendering(load);
+	load_GL_AMD_framebuffer_multisample_advanced(loadExtension);
+	load_GL_AMD_performance_monitor(loadExtension);
+	load_GL_ANGLE_framebuffer_blit(loadExtension);
+	load_GL_ANGLE_framebuffer_multisample(loadExtension);
+	load_GL_ANGLE_instanced_arrays(loadExtension);
+	load_GL_ANGLE_translated_shader_source(loadExtension);
+	load_GL_APPLE_copy_texture_levels(loadExtension);
+	load_GL_APPLE_framebuffer_multisample(loadExtension);
+	load_GL_APPLE_sync(loadExtension);
+	load_GL_EXT_EGL_image_storage(loadExtension);
+	load_GL_EXT_base_instance(loadExtension);
+	load_GL_EXT_blend_func_extended(loadExtension);
+	load_GL_EXT_blend_minmax(loadExtension);
+	load_GL_EXT_buffer_storage(loadExtension);
+	load_GL_EXT_clear_texture(loadExtension);
+	load_GL_EXT_clip_control(loadExtension);
+	load_GL_EXT_copy_image(loadExtension);
+	load_GL_EXT_debug_label(loadExtension);
+	load_GL_EXT_debug_marker(loadExtension);
+	load_GL_EXT_discard_framebuffer(loadExtension);
+	load_GL_EXT_disjoint_timer_query(loadExtension);
+	load_GL_EXT_draw_buffers(loadExtension);
+	load_GL_EXT_draw_buffers_indexed(loadExtension);
+	load_GL_EXT_draw_elements_base_vertex(loadExtension);
+	load_GL_EXT_draw_instanced(loadExtension);
+	load_GL_EXT_draw_transform_feedback(loadExtension);
+	load_GL_EXT_external_buffer(loadExtension);
+	load_GL_EXT_geometry_shader(loadExtension);
+	load_GL_EXT_instanced_arrays(loadExtension);
+	load_GL_EXT_map_buffer_range(loadExtension);
+	load_GL_EXT_memory_object(loadExtension);
+	load_GL_EXT_memory_object_fd(loadExtension);
+	load_GL_EXT_memory_object_win32(loadExtension);
+	load_GL_EXT_multi_draw_arrays(loadExtension);
+	load_GL_EXT_multi_draw_indirect(loadExtension);
+	load_GL_EXT_multisampled_render_to_texture(loadExtension);
+	load_GL_EXT_multiview_draw_buffers(loadExtension);
+	load_GL_EXT_occlusion_query_boolean(loadExtension);
+	load_GL_EXT_polygon_offset_clamp(loadExtension);
+	load_GL_EXT_primitive_bounding_box(loadExtension);
+	load_GL_EXT_raster_multisample(loadExtension);
+	load_GL_EXT_robustness(loadExtension);
+	load_GL_EXT_semaphore(loadExtension);
+	load_GL_EXT_semaphore_fd(loadExtension);
+	load_GL_EXT_semaphore_win32(loadExtension);
+	load_GL_EXT_separate_shader_objects(loadExtension);
+	load_GL_EXT_shader_framebuffer_fetch_non_coherent(loadExtension);
+	load_GL_EXT_shader_pixel_local_storage2(loadExtension);
+	load_GL_EXT_sparse_texture(loadExtension);
+	load_GL_EXT_tessellation_shader(loadExtension);
+	load_GL_EXT_texture_border_clamp(loadExtension);
+	load_GL_EXT_texture_buffer(loadExtension);
+	load_GL_EXT_texture_storage(loadExtension);
+	load_GL_EXT_texture_view(loadExtension);
+	load_GL_EXT_win32_keyed_mutex(loadExtension);
+	load_GL_EXT_window_rectangles(loadExtension);
+	load_GL_IMG_bindless_texture(loadExtension);
+	load_GL_IMG_framebuffer_downsample(loadExtension);
+	load_GL_IMG_multisampled_render_to_texture(loadExtension);
+	load_GL_INTEL_framebuffer_CMAA(loadExtension);
+	load_GL_INTEL_performance_query(loadExtension);
+	load_GL_KHR_blend_equation_advanced(loadExtension);
+	load_GL_KHR_debug(loadExtension);
+	load_GL_KHR_parallel_shader_compile(loadExtension);
+	load_GL_KHR_robustness(loadExtension);
+	load_GL_NV_bindless_texture(loadExtension);
+	load_GL_NV_blend_equation_advanced(loadExtension);
+	load_GL_NV_clip_space_w_scaling(loadExtension);
+	load_GL_NV_conditional_render(loadExtension);
+	load_GL_NV_conservative_raster(loadExtension);
+	load_GL_NV_conservative_raster_pre_snap_triangles(loadExtension);
+	load_GL_NV_copy_buffer(loadExtension);
+	load_GL_NV_coverage_sample(loadExtension);
+	load_GL_NV_draw_buffers(loadExtension);
+	load_GL_NV_draw_instanced(loadExtension);
+	load_GL_NV_draw_vulkan_image(loadExtension);
+	load_GL_NV_fence(loadExtension);
+	load_GL_NV_fragment_coverage_to_color(loadExtension);
+	load_GL_NV_framebuffer_blit(loadExtension);
+	load_GL_NV_framebuffer_mixed_samples(loadExtension);
+	load_GL_NV_framebuffer_multisample(loadExtension);
+	load_GL_NV_gpu_shader5(loadExtension);
+	load_GL_NV_instanced_arrays(loadExtension);
+	load_GL_NV_internalformat_sample_query(loadExtension);
+	load_GL_NV_memory_attachment(loadExtension);
+	load_GL_NV_mesh_shader(loadExtension);
+	load_GL_NV_non_square_matrices(loadExtension);
+	load_GL_NV_path_rendering(loadExtension);
+	load_GL_NV_polygon_mode(loadExtension);
+	load_GL_NV_read_buffer(loadExtension);
+	load_GL_NV_sample_locations(loadExtension);
+	load_GL_NV_scissor_exclusive(loadExtension);
+	load_GL_NV_shading_rate_image(loadExtension);
+	load_GL_NV_viewport_array(loadExtension);
+	load_GL_NV_viewport_swizzle(loadExtension);
+	load_GL_OES_EGL_image(loadExtension);
+	load_GL_OES_copy_image(loadExtension);
+	load_GL_OES_draw_buffers_indexed(loadExtension);
+	load_GL_OES_draw_elements_base_vertex(loadExtension);
+	load_GL_OES_geometry_shader(loadExtension);
+	load_GL_OES_get_program_binary(loadExtension);
+	load_GL_OES_mapbuffer(loadExtension);
+	load_GL_OES_primitive_bounding_box(loadExtension);
+	load_GL_OES_sample_shading(loadExtension);
+	load_GL_OES_tessellation_shader(loadExtension);
+	load_GL_OES_texture_3D(loadExtension);
+	load_GL_OES_texture_border_clamp(loadExtension);
+	load_GL_OES_texture_buffer(loadExtension);
+	load_GL_OES_texture_storage_multisample_2d_array(loadExtension);
+	load_GL_OES_texture_view(loadExtension);
+	load_GL_OES_vertex_array_object(loadExtension);
+	load_GL_OES_viewport_array(loadExtension);
+	load_GL_OVR_multiview(loadExtension);
+	load_GL_OVR_multiview_multisampled_render_to_texture(loadExtension);
+	load_GL_QCOM_alpha_test(loadExtension);
+	load_GL_QCOM_driver_control(loadExtension);
+	load_GL_QCOM_extended_get(loadExtension);
+	load_GL_QCOM_extended_get2(loadExtension);
+	load_GL_QCOM_framebuffer_foveated(loadExtension);
+	load_GL_QCOM_shader_framebuffer_fetch_noncoherent(loadExtension);
+	load_GL_QCOM_texture_foveated(loadExtension);
+	load_GL_QCOM_tiled_rendering(loadExtension);
 	return GLVersion.major != 0 || GLVersion.minor != 0;
 }
 

@@ -896,9 +896,9 @@ GLAPI int gladLoadGL(void);
 
 GLAPI int gladLoadGLLoader(GLADloadproc);
 
-GLAPI int gladLoadGLES2Loader(GLADloadproc);
+GLAPI int gladLoadGLES2Loader(GLADloadproc, GLADloadproc); // post-generator edit
 
-#include <KHR/khrplatform.h>
+#include <khrplatform.h>
 typedef unsigned int GLenum;
 typedef unsigned char GLboolean;
 typedef unsigned int GLbitfield;
