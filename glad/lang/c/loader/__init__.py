@@ -2,21 +2,41 @@
 LOAD_OPENGL_DLL = '''
 %(pre)s void* %(proc)s(const char *namez);
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
 #include <windows.h>
 static HMODULE libGL;
 
 typedef void* (APIENTRYP PFNWGLGETPROCADDRESSPROC_PRIVATE)(const char*);
-PFNWGLGETPROCADDRESSPROC_PRIVATE gladGetProcAddressPtr;
+static PFNWGLGETPROCADDRESSPROC_PRIVATE gladGetProcAddressPtr;
+
+#ifdef _MSC_VER
+#ifdef __has_include
+  #if __has_include(<winapifamily.h>)
+    #define HAVE_WINAPIFAMILY 1
+  #endif
+#elif _MSC_VER >= 1700 && !_USING_V110_SDK71_
+  #define HAVE_WINAPIFAMILY 1
+#endif
+#endif
+
+#ifdef HAVE_WINAPIFAMILY
+  #include <winapifamily.h>
+  #if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) && WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP)
+    #define IS_UWP 1
+  #endif
+#endif
 
 %(pre)s
 int %(init)s(void) {
+#ifndef IS_UWP
     libGL = LoadLibraryW(L"opengl32.dll");
     if(libGL != NULL) {
-        gladGetProcAddressPtr = (PFNWGLGETPROCADDRESSPROC_PRIVATE)GetProcAddress(
-                libGL, "wglGetProcAddress");
+        void (* tmp)(void);
+        tmp = (void(*)(void)) GetProcAddress(libGL, "wglGetProcAddress");
+        gladGetProcAddressPtr = (PFNWGLGETPROCADDRESSPROC_PRIVATE) tmp;
         return gladGetProcAddressPtr != NULL;
     }
+#endif
 
     return 0;
 }
@@ -24,7 +44,7 @@ int %(init)s(void) {
 %(pre)s
 void %(terminate)s(void) {
     if(libGL != NULL) {
-        FreeLibrary(libGL);
+        FreeLibrary((HMODULE) libGL);
         libGL = NULL;
     }
 }
@@ -32,9 +52,9 @@ void %(terminate)s(void) {
 #include <dlfcn.h>
 static void* libGL;
 
-#ifndef __APPLE__
+#if !defined(__APPLE__) && !defined(__HAIKU__)
 typedef void* (APIENTRYP PFNGLXGETPROCADDRESSPROC_PRIVATE)(const char*);
-PFNGLXGETPROCADDRESSPROC_PRIVATE gladGetProcAddressPtr;
+static PFNGLXGETPROCADDRESSPROC_PRIVATE gladGetProcAddressPtr;
 #endif
 
 %(pre)s
@@ -55,7 +75,7 @@ int %(init)s(void) {
         libGL = dlopen(NAMES[index], RTLD_NOW | RTLD_GLOBAL);
 
         if(libGL != NULL) {
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(__HAIKU__)
             return 1;
 #else
             gladGetProcAddressPtr = (PFNGLXGETPROCADDRESSPROC_PRIVATE)dlsym(libGL,
@@ -69,7 +89,7 @@ int %(init)s(void) {
 }
 
 %(pre)s
-void %(terminate)s() {
+void %(terminate)s(void) {
     if(libGL != NULL) {
         dlclose(libGL);
         libGL = NULL;
@@ -82,14 +102,14 @@ void* %(proc)s(const char *namez) {
     void* result = NULL;
     if(libGL == NULL) return NULL;
 
-#ifndef __APPLE__
+#if !defined(__APPLE__) && !defined(__HAIKU__)
     if(gladGetProcAddressPtr != NULL) {
         result = gladGetProcAddressPtr(namez);
     }
 #endif
     if(result == NULL) {
-#ifdef _WIN32
-        result = (void*)GetProcAddress(libGL, namez);
+#if defined(_WIN32) || defined(__CYGWIN__)
+        result = (void*)GetProcAddress((HMODULE) libGL, namez);
 #else
         result = dlsym(libGL, namez);
 #endif
@@ -105,7 +125,7 @@ LOAD_OPENGL_DLL_H = '''
 LOAD_OPENGL_GLAPI_H = '''
 #ifndef GLAPI
 # if defined(GLAD_GLAPI_EXPORT)
-#  if defined(WIN32) || defined(__CYGWIN__)
+#  if defined(_WIN32) || defined(__CYGWIN__)
 #   if defined(GLAD_GLAPI_EXPORT_BUILD)
 #    if defined(__GNUC__)
 #     define GLAPI __attribute__ ((dllexport)) extern

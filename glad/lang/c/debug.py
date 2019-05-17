@@ -31,14 +31,30 @@ void glad_set_post_callback(GLADcallback cb) {
 '''
 
 DEFAULT_CALLBACK = '''
-void _pre_call_callback_default(const char *name, void *funcptr, int len_args, ...) {}
-void _post_call_callback_default(const char *name, void *funcptr, int len_args, ...) {}
+void _pre_call_callback_default(const char *name, void *funcptr, int len_args, ...) {
+    (void) name;
+    (void) funcptr;
+    (void) len_args;
+}
+void _post_call_callback_default(const char *name, void *funcptr, int len_args, ...) {
+    (void) name;
+    (void) funcptr;
+    (void) len_args;
+}
 '''
 
 DEFAULT_CALLBACK_GL = '''
-void _pre_call_callback_default(const char *name, void *funcptr, int len_args, ...) {}
+void _pre_call_callback_default(const char *name, void *funcptr, int len_args, ...) {
+    (void) name;
+    (void) funcptr;
+    (void) len_args;
+}
 void _post_call_callback_default(const char *name, void *funcptr, int len_args, ...) {
     GLenum error_code;
+
+    (void) funcptr;
+    (void) len_args;
+
     error_code = glad_glGetError();
 
     if (error_code != GL_NO_ERROR) {
@@ -69,7 +85,7 @@ class CDebugGenerator(CGenerator):
     def write_function_prototype(self, fobj, func):
         fobj.write('typedef {} (APIENTRYP PFN{}PROC)({});\n'.format(
             func.proto.ret.to_c(), func.proto.name.upper(),
-            ', '.join(param.type.raw for param in func.params)
+            ', '.join(param.type.raw for param in func.params) or 'void'
         ))
         fobj.write('GLAPI PFN{}PROC glad_{};\n'.format(
             func.proto.name.upper(), func.proto.name
@@ -88,7 +104,7 @@ class CDebugGenerator(CGenerator):
         args_def = ', '.join(
             '{type} arg{i}'.format(type=param.type.to_c(), i=i)
             for i, param in enumerate(func.params)
-        )
+        ) or 'void'
         fobj.write('{} APIENTRY glad_debug_impl_{}({}) {{'.format(
             func.proto.ret.to_c(), func.proto.name, args_def
         ))
