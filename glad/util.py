@@ -1,3 +1,9 @@
+from collections import namedtuple
+
+
+Version = namedtuple('Version', ['major', 'minor'])
+
+
 _API_NAMES = {
     'egl': 'EGL',
     'gl': 'OpenGL',
@@ -10,5 +16,5 @@ _API_NAMES = {
 
 def api_name(api):
     api = api.lower()
-    return _API_NAMES[api]
+    return _API_NAMES.get(api, api.upper())
 

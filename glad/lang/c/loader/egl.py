@@ -18,10 +18,7 @@ _EGL_HEADER = '''
 #define __egl_h_
 
 #if defined(_WIN32) && !defined(APIENTRY) && !defined(__CYGWIN__) && !defined(__SCITECH_SNAP__)
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN 1
-#endif
-#include <windows.h>
+#define APIENTRY __stdcall
 #endif
 
 #ifndef APIENTRY
@@ -63,7 +60,8 @@ class EGLCLoader(BaseLoader):
             fobj.write(_EGL_LOADER)
 
     def write_begin_load(self, fobj):
-        pass
+        # suppress unused warnings
+        fobj.write('\t(void) load;\n')
 
     def write_end_load(self, fobj):
         fobj.write('\treturn 1;\n')

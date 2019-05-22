@@ -18,7 +18,7 @@ int gladLoadGL(void) {
 '''
 
 _OPENGL_HAS_EXT = '''
-struct gladGLversionStruct GLVersion;
+struct gladGLversionStruct GLVersion = { 0, 0 };
 
 #if defined(GL_ES_VERSION_3_0) || defined(GL_VERSION_3_0)
 #define _GLAD_IS_SOME_NEW_VERSION 1
@@ -29,7 +29,7 @@ static int max_loaded_minor;
 
 static const char *exts = NULL;
 static int num_exts_i = 0;
-static const char **exts_i = NULL;
+static char **exts_i = NULL;
 
 static int get_exts(void) {
 #ifdef _GLAD_IS_SOME_NEW_VERSION
@@ -38,20 +38,27 @@ static int get_exts(void) {
         exts = (const char *)glGetString(GL_EXTENSIONS);
 #ifdef _GLAD_IS_SOME_NEW_VERSION
     } else {
-        int index;
+        unsigned int index;
 
         num_exts_i = 0;
         glGetIntegerv(GL_NUM_EXTENSIONS, &num_exts_i);
         if (num_exts_i > 0) {
-            exts_i = (const char **)realloc((void *)exts_i, num_exts_i * sizeof *exts_i);
+            exts_i = (char **)malloc((size_t)num_exts_i * (sizeof *exts_i));
         }
 
         if (exts_i == NULL) {
             return 0;
         }
 
-        for(index = 0; index < num_exts_i; index++) {
-            exts_i[index] = (const char*)glGetStringi(GL_EXTENSIONS, index);
+        for(index = 0; index < (unsigned)num_exts_i; index++) {
+            const char *gl_str_tmp = (const char*)glGetStringi(GL_EXTENSIONS, index);
+            size_t len = strlen(gl_str_tmp);
+
+            char *local_str = (char*)malloc((len+1) * sizeof(char));
+            if(local_str != NULL) {
+                memcpy(local_str, gl_str_tmp, (len+1) * sizeof(char));
+            }
+            exts_i[index] = local_str;
         }
     }
 #endif
@@ -60,7 +67,11 @@ static int get_exts(void) {
 
 static void free_exts(void) {
     if (exts_i != NULL) {
-        free((char **)exts_i);
+        int index;
+        for(index = 0; index < num_exts_i; index++) {
+            free((char *)exts_i[index]);
+        }
+        free((void *)exts_i);
         exts_i = NULL;
     }
 }
@@ -93,11 +104,11 @@ static int has_ext(const char *ext) {
 #ifdef _GLAD_IS_SOME_NEW_VERSION
     } else {
         int index;
-
+        if(exts_i == NULL) return 0;
         for(index = 0; index < num_exts_i; index++) {
             const char *e = exts_i[index];
 
-            if(strcmp(e, ext) == 0) {
+            if(exts_i[index] != NULL && strcmp(e, ext) == 0) {
                 return 1;
             }
         }
@@ -123,10 +134,7 @@ _OPENGL_HEADER_INCLUDE_ERROR = '''
 
 _OPENGL_HEADER = '''
 #if defined(_WIN32) && !defined(APIENTRY) && !defined(__CYGWIN__) && !defined(__SCITECH_SNAP__)
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN 1
-#endif
-#include <windows.h>
+#define APIENTRY __stdcall
 #endif
 
 #ifndef APIENTRY
@@ -134,6 +142,10 @@ _OPENGL_HEADER = '''
 #endif
 #ifndef APIENTRYP
 #define APIENTRYP APIENTRY *
+#endif
+
+#ifndef GLAPIENTRY
+#define GLAPIENTRY APIENTRY
 #endif
 
 #ifdef __cplusplus

@@ -44,6 +44,7 @@ class Spec(object):
         self._commands = None
         self._features = None
         self._extensions = None
+        self._removes = dict()
 
     @classmethod
     def from_url(cls, url, opener=None):
@@ -57,6 +58,11 @@ class Spec(object):
 
     @classmethod
     def from_svn(cls, opener=None):
+        """deprecated"""
+        return cls.from_remote(opener=opener)
+
+    @classmethod
+    def from_remote(cls, opener=None):
         return cls.from_url(cls.API + cls.NAME + '.xml', opener=opener)
 
     @classmethod
@@ -141,6 +147,27 @@ class Spec(object):
 
         return self._extensions
 
+    def add_remove(self, api, number, symbol):
+        if api not in self._removes:
+            self._removes[api] = dict()
+
+        if number not in self._removes[api]:
+            self._removes[api][number] = set()
+
+        self._removes[api][number].add(symbol)
+
+    def get_removes(self, api, number):
+        if api not in self._removes:
+            return set()
+
+        removes = set()
+        for n, r in self._removes[api].items():
+            # a later specification removes the symbol
+            if n >= number:
+                removes = removes.union(r)
+
+        return removes
+
 
 class Type(object):
     def __init__(self, element):
@@ -149,7 +176,7 @@ class Type(object):
             apientry.text = 'APIENTRY'
         self.raw = ''.join(element.itertext())
         self.api = element.get('api')
-        self.name = element.get('name')
+        self.name = element.get('name') or element.find('name').text
 
     @property
     def is_preprocessor(self):
@@ -278,6 +305,17 @@ class OGLType(object):
             s = self.NIM_POINTER_MAP.get(s, default)
         return s
 
+    def to_pascal(self):
+        s = self.type
+        if self.is_pointer == 2:
+            s = 'PPointer' if s == 'void' else 'PP' + s
+        elif self.is_pointer == 1:
+            if s[0:6] == 'struct':
+                s = s[7:]
+            else:
+                s = 'Pointer' if s == 'void' else 'P' + s
+        return s
+
     __str__ = to_d
     __repr__ = __str__
 
@@ -323,6 +361,9 @@ class Feature(Extension):
         Extension.__init__(self, element, spec)
         self.spec = spec
 
+        self.number = tuple(map(int, element.attrib['number'].split('.')))
+        self.api = element.attrib['api']
+
         # not every spec has a ._remove member, but there shouldn't be a remove
         # tag without that member, if there is, blame me!
         for removed in chain.from_iterable(element.findall('remove')):
@@ -331,26 +372,25 @@ class Feature(Extension):
 
             data = {'enum': spec.enums, 'command': spec.commands}[removed.tag]
             try:
-                spec._remove.add(data[removed.attrib['name']])
+                spec.add_remove(self.api, self.number, data[removed.attrib['name']])
             except KeyError:
                 pass  # TODO
-
-        self.number = tuple(map(int, element.attrib['number'].split('.')))
-        self.api = element.attrib['api']
 
     def __str__(self):
         return '{self.name}@{self.number!r}'.format(self=self)
 
     @property
     def enums(self):
-        for enum in super(Feature, self).enums:
-            if enum not in getattr(self.spec, 'removed', []):
+        removed = self.spec.get_removes(self.api, self.number)
+        for enum in Extension.enums.fget(self):
+            if enum not in removed:
                 yield enum
 
     @property
     def functions(self):
-        for func in super(Feature, self).functions:
-            if func not in getattr(self.spec, 'removed', []):
+        removed = self.spec.get_removes(self.api, self.number)
+        for func in Extension.functions.fget(self):
+            if func not in removed:
                 yield func
 
     __repr__ = __str__
