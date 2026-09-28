@@ -3,7 +3,7 @@ from conans import ConanFile
 
 class GladConan(ConanFile):
     name = "glad"
-    version = "0.1"
+    version = "v0.1.29"
     url = "https://github.com/Esri/glad/tree/runtimecore"
     license = "https://github.com/Esri/glad/blob/runtimecore/LICENSE"
     description = "An OpenGL and OpenGL ES shader front end and validator."
